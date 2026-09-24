@@ -2421,6 +2421,42 @@
   .table-wrap tbody td[colspan]{display:block;text-align:center;}
 }
 </style>
+<style id="filledby-css">
+body:not(.admin-mode-active) .col-addedby{display:none !important;}
+/* keep the monospace look on the same columns after the new column shifted them */
+#tableBody td:nth-child(4){font-family:var(--font-body);font-size:13px;}
+#tableBody td:nth-child(5),#tableBody td:nth-child(6){font-family:var(--font-mono);font-size:12px;}
+#openedTableBody td:nth-child(4){font-family:var(--font-body);font-size:13px;}
+#openedTableBody td:nth-child(5),#openedTableBody td:nth-child(6){font-family:var(--font-mono);font-size:12px;}
+.filled-by{display:inline-block;padding:3px 9px;border-radius:999px;background:#EEF2F8;color:var(--navy-dark);font-size:12px;font-weight:600;white-space:nowrap;}
+</style>
+<style id="presence-css">
+.status-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-top:7px;}
+.brand-right-content .status-row .mode-label{margin-top:0;}
+.net-pill,.online-users{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(107,122,142,0.25);box-shadow:0 1px 4px rgba(15,39,68,0.08);display:inline-block;letter-spacing:.3px;line-height:1.35;}
+.net-pill.online{background:#E4F5E9;color:#1e6b1e;border-color:rgba(30,107,30,0.3);}
+.net-pill.offline{background:#FCE7E7;color:#a13030;border-color:rgba(161,48,48,0.4);}
+.online-users{background:#EAF1FB;color:#132A4E;max-width:100%;white-space:normal;text-align:center;}
+.filled-by .ou-dot{display:none;}
+.filled-by.is-online .ou-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2fbf5b;margin-right:5px;box-shadow:0 0 0 2px rgba(47,191,91,0.25);vertical-align:middle;}
+#offlineBar{position:fixed;top:0;left:0;right:0;z-index:10001;background:#a13030;color:#fff;text-align:center;font-size:12px;font-weight:700;padding:6px 10px;display:none;}
+body.is-offline #offlineBar{display:block;}
+.dup-overlay{position:fixed;inset:0;z-index:10002;background:rgba(5,15,28,0.6);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px);}
+.dup-box{background:#fff;color:#16202E;border-radius:14px;width:420px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 24px 60px -12px rgba(3,12,25,0.55);}
+.dup-head{background:#a13030;color:#fff;padding:14px 18px;font-size:16px;font-weight:700;border-radius:14px 14px 0 0;}
+.dup-body{padding:16px 18px 6px;font-size:14px;line-height:1.5;}
+.dup-lead{margin:0 0 10px;}
+.dup-sub{margin:0 0 6px;color:#6B7A8E;font-size:13px;}
+.dup-card{border:1px solid #E4E9F0;border-radius:10px;overflow:hidden;background:#FAF8F3;}
+.dup-row{display:flex;justify-content:space-between;gap:12px;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:13px;}
+.dup-row:last-child{border-bottom:none;}
+.dup-row span{color:#6B7A8E;font-weight:600;flex:0 0 38%;}
+.dup-row b{text-align:right;word-break:break-word;}
+.dup-actions{display:flex;gap:10px;padding:14px 18px 18px;flex-wrap:wrap;}
+.dup-btn{flex:1 1 140px;padding:11px 14px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+.dup-cancel{background:#132A4E;color:#fff;}
+.dup-force{background:#EEF2F6;color:#16202E;}
+</style>
 <script id="mobile-fit-js">
 (function(){
   function label(table){
@@ -2454,6 +2490,7 @@
 </script>
 </head>
 <body>
+<div id="offlineBar">🔴 Internet nahi hai — Offline</div>
 
 <!-- Full-screen decorative bubbles, shown only in Animated Mode -->
 <div class="bubbles-overlay" id="bubblesOverlay" aria-hidden="true"></div>
@@ -2829,7 +2866,11 @@
             <button class="live-chip silver" id="liveSilver" type="button" aria-expanded="false">🥈 Silver: Loading…</button>
             <button class="live-chip weather" id="liveWeather" type="button" aria-expanded="false">🌤 Weather: Loading…</button>
           </div>
-          <div id="adminModeLabel" class="mode-label">👁 View Mode</div>
+          <div class="status-row">
+            <div id="adminModeLabel" class="mode-label">👁 View Mode</div>
+            <div id="netStatusPill" class="net-pill online" title="Internet status">🟢 Online</div>
+            <div id="onlineUsersBox" class="online-users" style="display:none;"></div>
+          </div>
         </div>
       </div>
 
@@ -3048,6 +3089,8 @@
           <option value="Asma Lodhi">Asma Lodhi</option>
           <option value="Waheed Ali">Waheed Ali</option>
         </select>
+        <input type="text" id="userFilter" list="userFilterList" placeholder="👤 User name se filter..." autocomplete="off" style="display:none;">
+        <datalist id="userFilterList"></datalist>
         <input type="text" id="searchBox" placeholder="Search by name, CNIC, mobile...">
       </div>
     </div>
@@ -3057,6 +3100,7 @@
           <tr>
             <th>Date of Submission</th>
             <th>Client Name</th>
+            <th class="col-addedby">Filled By</th>
             <th>CNIC</th>
             <th>Dealer</th>
             <th>Mobile Number</th>
@@ -3206,6 +3250,7 @@
             <th>Account No.</th>
             <th>Date of Submission</th>
             <th>Client Name</th>
+            <th class="col-addedby">Filled By</th>
             <th>CNIC</th>
             <th>Dealer</th>
             <th>Mobile Number</th>
@@ -4687,6 +4732,8 @@ function applyAdminUI(){
   if(loginBtn) loginBtn.textContent = admin ? '🔓 Admin Logout' : '🔐 Admin Login';
   if(loginBtn) loginBtn.style.display = subuser ? 'none' : 'inline-flex';
   document.body.classList.toggle('admin-mode-active', admin);
+  const userFilterEl = document.getElementById('userFilter');
+  if(userFilterEl){ userFilterEl.style.display = admin ? '' : 'none'; if(!admin && userFilterEl.value) userFilterEl.value = ''; }
   document.body.classList.toggle('subuser-mode-active', subuser);
 
   // Sub-user only login / logout / request-access controls.
@@ -5628,6 +5675,19 @@ async function handleSave(){
     addedByName: editingId ? ((oldRecord && oldRecord.addedByName) || '') : (isSubUserMode() ? currentSubUserName : 'Admin')
   };
 
+  // Duplicate guard: same CNIC / Client ID / Dashboard ID already in the system?
+  {
+    const dup = findDuplicateRecord(entry, oldRecord);
+    if(dup){
+      const proceed = await showDuplicatePopup(dup);
+      if(!proceed){
+        msg.textContent = '\u26A0 Yeh account pehle se add hai \u2014 entry save nahi hui.';
+        msg.className = 'status-msg err';
+        return;
+      }
+    }
+  }
+
   // Stamp the exact date & time the moment status becomes "A/C Opened"
   if(newStatus === 'A/C Opened' && !entry.openedAt){
     entry.openedAt = new Date().toISOString();
@@ -5705,6 +5765,100 @@ function deleteRecord(id){
   render();
 }
 
+// ---------- "Filled By" (which user added the record) + Admin user-filter ----------
+function filledByHtml(r){
+  const n = ((r && r.addedByName) || '').trim();
+  if(!n) return '<span style="color:var(--muted);">\u2014</span>';
+  const icon = n.toLowerCase() === 'admin' ? '\uD83D\uDEE0' : '\uD83E\uDDD1';
+  return '<span class="filled-by" data-name="' + escapeHtml(n.toLowerCase()) + '"><i class="ou-dot"></i>' + icon + ' ' + escapeHtml(n) + '</span>';
+}
+function applyUserFilter(list){
+  if(!isAdminMode()) return list;
+  const el = document.getElementById('userFilter');
+  const q = el ? el.value.trim().toLowerCase() : '';
+  if(!q) return list;
+  return list.filter(r => ((r.addedByName || '')).toLowerCase().includes(q));
+}
+function refreshUserFilterOptions(){
+  const dl = document.getElementById('userFilterList');
+  if(!dl) return;
+  const seen = {}; const names = [];
+  records.forEach(r => {
+    const n = ((r && r.addedByName) || '').trim();
+    if(n && !seen[n.toLowerCase()]){ seen[n.toLowerCase()] = true; names.push(n); }
+  });
+  names.sort((a,b) => a.localeCompare(b));
+  const sig = names.join('|');
+  if(dl.getAttribute('data-sig') === sig) return;
+  dl.setAttribute('data-sig', sig);
+  dl.innerHTML = names.map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
+}
+
+// ---------- Duplicate account check + popup ----------
+function normDigitsKey(v){ return String(v || '').replace(/\D/g, ''); }
+function normTextKey(v){ return String(v || '').trim().toLowerCase().replace(/\s+/g, ''); }
+function findDuplicateRecord(entry, oldRecord){
+  const checks = [
+    { label: 'CNIC',         get: r => normDigitsKey(r && r.cnic) },
+    { label: 'Client ID',    get: r => normTextKey(r && r.clientId) },
+    { label: 'Dashboard ID', get: r => normTextKey(r && r.dashboardId) }
+  ];
+  let found = null;
+  for(const c of checks){
+    const v = c.get(entry);
+    if(!v) continue;
+    if(oldRecord && c.get(oldRecord) === v) continue;   // unchanged while editing
+    const hit = records.find(r => r.id !== entry.id && c.get(r) === v);
+    if(!hit) continue;
+    if(!found) found = { rec: hit, fields: [c.label] };
+    else if(found.rec.id === hit.id) found.fields.push(c.label);
+  }
+  return found;
+}
+function showDuplicatePopup(dup){
+  return new Promise(function(resolve){
+    const admin = isAdminMode();
+    const r = dup.rec;
+    const old = document.getElementById('dupOverlay');
+    if(old) old.remove();
+    const ov = document.createElement('div');
+    ov.id = 'dupOverlay';
+    ov.className = 'dup-overlay';
+    let body;
+    if(admin){
+      const row = (k, v) => '<div class="dup-row"><span>' + k + '</span><b>' + escapeHtml(v || '\u2014') + '</b></div>';
+      body = '<p class="dup-lead">Yeh <b>' + escapeHtml(dup.fields.join(' + ')) + '</b> pehle se system me maujood hai:</p>' +
+        '<div class="dup-card">' +
+          row('Client Name', r.name) + row('CNIC', r.cnic) + row('Client ID', r.clientId) +
+          row('Dashboard ID', r.dashboardId) + row('Status', r.status) +
+          row('Date', fmtDisplayDate(r.date)) + row('Filled By', r.addedByName) +
+        '</div>';
+    }else{
+      body = '<p class="dup-lead">Is <b>' + escapeHtml(dup.fields.join(' + ')) + '</b> ka account pehle se system me add hai, is liye dobara add nahi kiya ja sakta.</p>' +
+             '<p class="dup-sub">Zaroorat ho to Admin se rabta karein.</p>';
+    }
+    const actions = admin
+      ? '<button type="button" class="dup-btn dup-cancel" id="dupCancelBtn">Cancel (add na karo)</button>' +
+        '<button type="button" class="dup-btn dup-force" id="dupForceBtn">Phir bhi add karo</button>'
+      : '<button type="button" class="dup-btn dup-cancel" id="dupCancelBtn">Theek hai</button>';
+    ov.innerHTML = '<div class="dup-box" role="alertdialog" aria-modal="true">' +
+      '<div class="dup-head">\u26A0\uFE0F Yeh account pehle se add hai</div>' +
+      '<div class="dup-body">' + body + '</div>' +
+      '<div class="dup-actions">' + actions + '</div></div>';
+    document.body.appendChild(ov);
+    function done(v){
+      document.removeEventListener('keydown', onKey);
+      ov.remove();
+      resolve(v);
+    }
+    function onKey(e){ if(e.key === 'Escape') done(false); }
+    document.addEventListener('keydown', onKey);
+    ov.querySelector('#dupCancelBtn').addEventListener('click', function(){ done(false); });
+    const force = ov.querySelector('#dupForceBtn');
+    if(force) force.addEventListener('click', function(){ done(true); });
+  });
+}
+
 function rowHtml(r){
   const days = recordDays(r);
   const actionsCell = isAdminMode() ? `<td>
@@ -5714,6 +5868,7 @@ function rowHtml(r){
   return `<tr class="${statusClass(r.status)}" ondblclick="showRecordDetail('${r.id}')" title="Double-click to view full record">
       <td>${escapeHtml(fmtDisplayDate(r.date))}</td>
       <td>${escapeHtml(r.name)}</td>
+      <td class="col-addedby">${filledByHtml(r)}</td>
       <td>${maskedText(r.cnic)}</td>
       <td>${r.dealer ? maskedText(r.dealer) : '<span style="color:var(--muted);">\u2014</span>'}</td>
       <td>${maskedText(r.mobile)}</td>
@@ -5782,6 +5937,7 @@ function printAccountsInProcess(){
     const dealerKey = normDealer(dealerFilterVal);
     all = all.filter(r => normDealer(r.dealer) === dealerKey);
   }
+  all = applyUserFilter(all);
   if(search){
     all = all.filter(r =>
       (r.name||'').toLowerCase().includes(search) ||
@@ -5798,6 +5954,7 @@ function printAccountsInProcess(){
 
   const filterNote = [
     dealerFilterVal ? (dealerFilterVal === NO_DEALER ? 'Dealer: (koi nahi)' : `Dealer: ${escapeHtml(dealerFilterVal)}`) : '',
+    (document.getElementById('userFilter') && document.getElementById('userFilter').value.trim()) ? `User: ${escapeHtml(document.getElementById('userFilter').value.trim())}` : '',
     search ? `Search: "${escapeHtml(document.getElementById('searchBox').value.trim())}"` : ''
   ].filter(Boolean).join(' &nbsp;|&nbsp; ');
 
@@ -5895,6 +6052,7 @@ function printOpenedAccounts(){
     const dealerKey = normDealer(dealerFilterVal);
     all = all.filter(r => normDealer(r.dealer) === dealerKey);
   }
+  all = applyUserFilter(all);
   if(search){
     all = all.filter(r =>
       (r.name||'').toLowerCase().includes(search) ||
@@ -5926,6 +6084,7 @@ function printOpenedAccounts(){
 
   const filterNote = [
     dealerFilterVal ? (dealerFilterVal === NO_DEALER ? 'Dealer: (koi nahi)' : `Dealer: ${escapeHtml(dealerFilterVal)}`) : '',
+    (document.getElementById('userFilter') && document.getElementById('userFilter').value.trim()) ? `User: ${escapeHtml(document.getElementById('userFilter').value.trim())}` : '',
     search ? `Search: "${escapeHtml(document.getElementById('searchBox').value.trim())}"` : ''
   ].filter(Boolean).join(' &nbsp;|&nbsp; ');
 
@@ -5997,6 +6156,7 @@ function openedRowHtml(r, accNo){
       <td>${accNo === undefined || accNo === null ? '' : accNo}</td>
       <td>${escapeHtml(fmtDisplayDate(r.date))}</td>
       <td>${escapeHtml(r.name)}</td>
+      <td class="col-addedby">${filledByHtml(r)}</td>
       <td>${maskedText(r.cnic)}</td>
       <td>${r.dealer ? maskedText(r.dealer) : '<span style="color:var(--muted);">\u2014</span>'}</td>
       <td>${maskedText(r.mobile)}</td>
@@ -6049,6 +6209,9 @@ function showRecordDetail(id){
   html += detailField('Date of Submission', fmtDisplayDate(r.date));
   html += detailField('No of Days', days === null ? '' : days);
   html += `<div class="detail-item"><label>Status</label><div class="val"><span class="detail-status-pill" style="background:${statusColor}22;color:${statusColor};">${escapeHtml(r.status || '')}</span></div></div>`;
+  if(admin){
+    html += detailField('Filled By (User)', r.addedByName || '\u2014');
+  }
   if(r.openedAt){
     html += detailField('A/C Opened On', admin ? fmtDisplayDateTime(r.openedAt) : maskValue(fmtDisplayDateTime(r.openedAt)));
   }
@@ -6273,6 +6436,7 @@ function refreshDealerFilterOptions(){
 function render(){
   applyAdminUI();
   refreshDealerFilterOptions();
+  refreshUserFilterOptions();
   const tbody = document.getElementById('tableBody');
   const emptyState = document.getElementById('emptyState');
   const openedTbody = document.getElementById('openedTableBody');
@@ -6291,6 +6455,7 @@ function render(){
     const dealerKey = normDealer(dealerFilterVal);
     all = all.filter(r => normDealer(r.dealer) === dealerKey);
   }
+  all = applyUserFilter(all);
   if(search){
     all = all.filter(r =>
       (r.name||'').toLowerCase().includes(search) ||
@@ -7357,6 +7522,7 @@ loadDeposits();
 document.getElementById('saveBtn').addEventListener('click', handleSave);
 document.getElementById('cancelEditBtn').addEventListener('click', clearForm);
 document.getElementById('searchBox').addEventListener('input', render);
+document.getElementById('userFilter').addEventListener('input', render);
 document.getElementById('printAccountsBtn').addEventListener('click', printAccountsInProcess);
 document.getElementById('printOpenedBtn').addEventListener('click', printOpenedAccounts);
 document.getElementById('dealerFilter').addEventListener('change', function(){
@@ -8409,6 +8575,7 @@ function savePwSettings(){
     bodyCells.forEach((td, i) => {
       const label = headCells[i] ? headCells[i].textContent.trim() : '';
       if(!label || label.toLowerCase() === 'actions') return;
+      if(headCells[i] && headCells[i].classList.contains('col-addedby') && !isAdminMode()) return;
       const val = td.textContent.trim();
       rows += `<div class="rhd-row"><span class="rhd-label">${escapeHtml(label)}</span><span class="rhd-val">${escapeHtml(val || '—')}</span></div>`;
     });
@@ -9261,4 +9428,135 @@ function sendChatMessage(){
 </script>
 
 
+<script id="presence-js">
+(function(){
+  'use strict';
+  var netOnline = navigator.onLine;
+  var lastKey = '';
+  var onlineNames = {};
+  var busy = false;
+  var rulesMissing = false;
+
+  // ---------- Internet status ----------
+  function paintNet(){
+    var pill = document.getElementById('netStatusPill');
+    if(pill){
+      pill.className = 'net-pill ' + (netOnline ? 'online' : 'offline');
+      pill.textContent = netOnline ? '\uD83D\uDFE2 Online' : '\uD83D\uDD34 Offline';
+    }
+    document.body.classList.toggle('is-offline', !netOnline);
+  }
+  function setNet(on){
+    var changed = (on !== netOnline);
+    netOnline = on;
+    paintNet();
+    if(changed && on) tick();
+  }
+  function probe(){
+    if(!navigator.onLine){ setNet(false); return; }
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var t = setTimeout(function(){ if(ctl) ctl.abort(); }, 7000);
+    fetch(FIREBASE_DB_URL + '/probe.json?_=' + Date.now(), { mode: 'no-cors', cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+      .then(function(){ clearTimeout(t); setNet(true); })
+      .catch(function(){ clearTimeout(t); setNet(false); });
+  }
+  window.addEventListener('online', probe);
+  window.addEventListener('offline', function(){ setNet(false); });
+
+  // ---------- Presence (who is online) ----------
+  function myName(){ return isAdminMode() ? 'Admin' : (currentSubUserName || 'User'); }
+  function active(){ return !!firebaseUser && !!currentIdToken && (isAdminMode() || isSubUserMode()); }
+
+  function beat(){
+    if(!netOnline || !active()) return Promise.resolve(false);
+    var body = JSON.stringify({ name: myName(), role: isAdminMode() ? 'admin' : 'subuser', ts: { '.sv': 'timestamp' } });
+    return fetch(dbUrl('presence/' + firebaseUser.uid + '.json'), { method: 'PUT', body: body })
+      .then(function(r){ return r.ok; }).catch(function(){ return false; });
+  }
+  function leave(){
+    try{
+      if(!firebaseUser || !currentIdToken) return;
+      fetch(dbUrl('presence/' + firebaseUser.uid + '.json'), { method: 'DELETE', keepalive: true }).catch(function(){});
+    }catch(e){}
+  }
+
+  function updateDots(){
+    var els = document.querySelectorAll('.filled-by[data-name]');
+    for(var i = 0; i < els.length; i++){
+      els[i].classList.toggle('is-online', !!onlineNames[els[i].getAttribute('data-name')]);
+    }
+  }
+  function paintOnline(list){
+    var box = document.getElementById('onlineUsersBox');
+    if(!box) return;
+    if(!isAdminMode()){ box.style.display = 'none'; return; }
+    box.style.display = 'inline-block';
+    if(rulesMissing){ box.textContent = '\u26A0 Online list ke liye Firebase rules update karein'; return; }
+    if(!list.length){ box.textContent = '\u26AA Koi user online nahi'; return; }
+    box.innerHTML = '\uD83D\uDFE2 Online (' + list.length + '): ' + list.map(escapeHtml).join(' \u00B7 ');
+  }
+  function poll(){
+    return fetch(dbUrl('presence.json'), { cache: 'no-store' }).then(function(res){
+      if(res.status === 401 || res.status === 403){ rulesMissing = true; onlineNames = {}; paintOnline([]); updateDots(); return; }
+      if(!res.ok) return;
+      rulesMissing = false;
+      return res.json().then(function(data){
+        data = data || {};
+        var uids = Object.keys(data), maxTs = 0, i;
+        for(i = 0; i < uids.length; i++){ var t = Number(data[uids[i]] && data[uids[i]].ts) || 0; if(t > maxTs) maxTs = t; }
+        var names = [], map = {};
+        for(i = 0; i < uids.length; i++){
+          var e = data[uids[i]] || {};
+          var ts = Number(e.ts) || 0;
+          if(!ts || (maxTs - ts) > 60000) continue;           // missed ~3 beats => offline
+          var nm = String(e.name || 'User');
+          map[nm.toLowerCase()] = true;
+          if(firebaseUser && uids[i] === firebaseUser.uid) continue; // don't list myself
+          if(names.indexOf(nm) === -1) names.push(nm);
+        }
+        onlineNames = map;
+        names.sort();
+        paintOnline(names);
+        updateDots();
+      });
+    }).catch(function(){});
+  }
+
+  function tick(){
+    if(busy) return;
+    busy = true;
+    beat().then(function(){ if(isAdminMode() && netOnline) return poll(); })
+      .then(function(){ busy = false; }, function(){ busy = false; });
+  }
+
+  // detect login / logout without touching the login code
+  setInterval(function(){
+    var key = active() ? (firebaseUser.uid + '|' + (isAdminMode() ? 'a' : 's')) : '';
+    if(key !== lastKey){
+      lastKey = key;
+      if(key){ tick(); }
+      else { onlineNames = {}; paintOnline([]); updateDots(); }
+    }
+  }, 1500);
+  setInterval(tick, 20000);
+  setInterval(probe, 15000);
+
+  // logging out explicitly: remove my presence right away
+  var origLogout = window.logoutAdmin;
+  if(typeof origLogout === 'function'){
+    window.logoutAdmin = function(){ try{ leave(); }catch(e){} return origLogout.apply(this, arguments); };
+  }
+  window.addEventListener('pagehide', leave);
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible'){ probe(); tick(); } });
+
+  // keep the green dots correct whenever the tables are re-rendered
+  ['tableBody', 'openedTableBody'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) new MutationObserver(updateDots).observe(el, { childList: true });
+  });
+
+  paintNet();
+  probe();
+})();
+</script>
 </body></html>
