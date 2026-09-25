@@ -2430,6 +2430,12 @@ body:not(.admin-mode-active) .col-addedby{display:none !important;}
 #openedTableBody td:nth-child(5),#openedTableBody td:nth-child(6){font-family:var(--font-mono);font-size:12px;}
 .filled-by{display:inline-block;padding:3px 9px;border-radius:999px;background:#EEF2F8;color:var(--navy-dark);font-size:12px;font-weight:600;white-space:nowrap;}
 </style>
+<style id="selmenu-css">
+#selMenu{position:fixed;z-index:10005;display:flex;gap:2px;background:#16202E;border-radius:8px;padding:4px;box-shadow:0 8px 22px -6px rgba(0,0,0,0.45);}
+#selMenu button{background:none;border:none;color:#fff;font-size:13px;font-weight:600;padding:7px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;}
+#selMenu button:hover{background:rgba(255,255,255,0.15);}
+#selMenu::after{content:'';position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);border:6px solid transparent;border-top-color:#16202E;}
+</style>
 <style id="presence-css">
 .status-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-top:7px;}
 .brand-right-content .status-row .mode-label{margin-top:0;}
@@ -9428,6 +9434,76 @@ function sendChatMessage(){
 </script>
 
 
+<script id="selmenu-js">
+(function(){
+  var menu=null;
+  function editable(el){
+    return !!el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.isContentEditable);
+  }
+  function hide(){ if(menu){ menu.remove(); menu=null; } }
+  function build(x,y,el){
+    hide();
+    menu=document.createElement('div'); menu.id='selMenu';
+    var canCut = editable(el) && !(el.disabled || el.readOnly);
+    var canPaste = canCut;
+    var items=[];
+    if(canCut) items.push(['Cut', function(){ try{document.execCommand('cut');}catch(e){} hide(); }]);
+    items.push(['Copy', function(){
+      var text = window.getSelection().toString();
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).catch(function(){ try{document.execCommand('copy');}catch(e){} });
+      } else { try{document.execCommand('copy');}catch(e){} }
+      hide();
+    }]);
+    if(canPaste) items.push(['Paste', function(){
+      if(navigator.clipboard && navigator.clipboard.readText){
+        navigator.clipboard.readText().then(function(t){
+          if(document.activeElement===el && typeof el.setRangeText==='function'){
+            var s=el.selectionStart||0, en=el.selectionEnd||0;
+            el.setRangeText(t, s, en, 'end');
+            el.dispatchEvent(new Event('input',{bubbles:true}));
+          }
+        }).catch(function(){ try{document.execCommand('paste');}catch(e){} });
+      } else { try{document.execCommand('paste');}catch(e){} }
+      hide();
+    }]);
+    items.forEach(function(it){
+      var b=document.createElement('button'); b.type='button'; b.textContent=it[0];
+      b.addEventListener('mousedown', function(ev){ ev.preventDefault(); it[1](); });
+      menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+    var r=menu.getBoundingClientRect();
+    var left=Math.min(Math.max(8,x-r.width/2), window.innerWidth-r.width-8);
+    var top=Math.max(8,y-r.height-10);
+    menu.style.left=left+'px'; menu.style.top=top+'px';
+  }
+  function onUp(e){
+    setTimeout(function(){
+      var sel=window.getSelection();
+      var text=sel && sel.toString();
+      var active=document.activeElement;
+      if((text && text.length) || (editable(active) && active.selectionStart!==active.selectionEnd)){
+        var rect;
+        if(text && sel.rangeCount){ rect=sel.getRangeAt(0).getBoundingClientRect(); }
+        if(!rect || (rect.width===0 && rect.height===0)) rect={left:e.clientX,right:e.clientX,top:e.clientY,height:0};
+        build((rect.left+rect.right)/2, rect.top, active);
+      } else {
+        hide();
+      }
+    }, 0);
+  }
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('contextmenu', function(e){
+    var active=document.activeElement;
+    var sel=window.getSelection();
+    if((sel && sel.toString()) || editable(active)){ e.preventDefault(); onUp(e); }
+  });
+  document.addEventListener('scroll', hide, true);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') hide(); });
+  window.addEventListener('resize', hide);
+})();
+</script>
 <script id="presence-js">
 (function(){
   'use strict';
